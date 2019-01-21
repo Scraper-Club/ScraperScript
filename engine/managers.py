@@ -11,11 +11,11 @@ class LinkManager(ModelManager):
         self.db_adapter = db_adapter
         self.api = api
 
-        self.db_adapter.update(
-            self.table_name,
-            {'status', Link.Status.DONE},
-            Condition('type', Link.Type.SEARCH)
-        )
+        # self.db_adapter.update(
+        #     self.table_name,
+        #     {'status': Link.Status.DONE},
+        #     Condition('type', Link.Type.SEARCH)
+        # )
 
     def upload_link(self, link, link_type):
         """
@@ -28,14 +28,13 @@ class LinkManager(ModelManager):
         search_link = Link()
         try:
             search_link.id = self.api.upload_target_link(link)['id']
-
-        except self.api.ScraperApiException as err:
+        except Exception as e:
             return False
 
         else:
             search_link.type = link_type
             search_link.status = Link.Status.WAITING
-
+            print(search_link.get_values())
             self.insert(
                 search_link.get_values()
             )
@@ -60,7 +59,7 @@ class LinkManager(ModelManager):
 
 class EngineStateManager(ModelManager):
     model = EngineState
-    table_name = 'state'
+    table_name = 'engine'
 
     def set_current_state(self, state):
         self.update(
@@ -70,6 +69,6 @@ class EngineStateManager(ModelManager):
 
     def get_current_state(self):
         return self.select(
-            ('state',),
-            Condition('id', 1)
-        ).fetchone()
+            columns=('state',),
+            condition=Condition('id', 1)
+        ).fetchone()[0]

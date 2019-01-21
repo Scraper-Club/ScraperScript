@@ -1,4 +1,5 @@
 from db import Condition
+from parsing import ParserException
 from .models import Link
 
 
@@ -25,8 +26,7 @@ class SearchLinkHandler(BaseLinkHandler):
 
         try:
             search_scrap_id = self.api.get_url_info(search_url_id)['scrap']
-        except self.api.ScraperApiException as err:
-            print(err.message)
+        except Exception as err:
             return
 
         if search_scrap_id:
@@ -40,10 +40,16 @@ class SearchLinkHandler(BaseLinkHandler):
         try:
             search_url_content = self.api.get_scrap_result(search_scrap_id)
 
-        except self.api.ScraperApiException as err:
+        except Exception as err:
             return None
 
-        return self.parser.parse(search_url_content)
+        return self.parser.get_links(search_url_content)
+
+    def finish(self):
+        self.manager.update(
+            {'status': Link.Status.DONE},
+            Condition('type', Link.Type.SEARCH)
+        )
 
 
 class TargetLinksHandler(BaseLinkHandler):
@@ -73,15 +79,17 @@ class TargetLinksHandler(BaseLinkHandler):
         try:
             target_scrap_id = self.api.get_url_info(link_id)['scrap']
 
-        except self.api.ScraperApiException as err:
+        except Exception as err:
             return
 
         if target_scrap_id:
             try:
                 target = self.__parse(target_scrap_id)
 
-            except self.parser.ParseException:
+            except ParserException:
                 self.__mark_link(link_id, Link.Status.BAD)
+                print('Bad scrap result. ID=',target_scrap_id)
+                return
 
             else:
                 self.__mark_link(link_id, Link.Status.DONE)
@@ -101,10 +109,10 @@ class TargetLinksHandler(BaseLinkHandler):
         try:
             search_url_content = self.api.get_scrap_result(scrap_id)
 
-        except self.api.ScraperApiException as err:
+        except Exception as err:
             return None
 
-        return self.parser.parse(search_url_content)
+        return self.parser.get_result(search_url_content)
 
     def __save_model(self, manager_class, model_obj):
         model_manager = manager_class(self.manager.db_adapter)

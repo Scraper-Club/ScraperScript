@@ -6,27 +6,27 @@ class ModelManager:
         self.db_adapter = db_adapter
 
     def insert(self, values):
-        self.db_adapter.insert(
+        return self.db_adapter.insert(
             self.table_name,
             values,
         )
 
     def update(self, values, condition):
-        self.db_adapter.update(
+        return self.db_adapter.update(
             self.table_name,
             values,
             condition
         )
 
     def delete(self, condition=None):
-        self.db_adapter.delete(
+        return self.db_adapter.delete(
             self.table_name,
             condition
         )
 
-    def select(self, values=None, condition=None):
-        self.db_adapter.select(
+    def select(self, columns=None, condition=None):
+        return self.db_adapter.select(
             self.table_name,
-            values,
+            columns,
             condition
         )

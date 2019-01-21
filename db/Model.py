@@ -25,6 +25,6 @@ class Model(object):
 
     def get_values(self):
         values = {}
-        for field in self.resolve_fields():
-            values[field[0]] = field[1].value
+        for field_name, field_obj in self.resolve_fields():
+            values[field_name] = self.__getattribute__(field_name)
         return values

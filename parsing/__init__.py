@@ -1,1 +1,1 @@
-from .base import SearchResultParser, TargetResultParser
+from .base import SearchResultParser, TargetResultParser, ParserException

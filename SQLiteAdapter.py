@@ -37,7 +37,9 @@ def wrap_string_values(values):
     wrapped_values = {}
     for key, value in values.items():
         if isinstance(value, 'str'.__class__):
-            wrapped_values[key] = "'{}'".format(value)
+            wrapped_values[key] = "'{}'".format(value.replace('\'','*'))
+        elif value is None:
+            wrapped_values[key] = "''"
         else:
             wrapped_values[key] = value
 
@@ -98,6 +100,7 @@ class SQLiteAdapter(DatabaseAdapter):
             fields=fields,
             values=insert_values
         )
+        print(sql)
         return self.__exec_sql(sql)
 
     def select(self, table, columns=None, condition=None):

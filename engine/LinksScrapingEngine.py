@@ -1,3 +1,4 @@
+from parsing import ParserException
 from .models import Link, EngineState
 from .managers import LinkManager, EngineStateManager
 from .handlers import SearchLinkHandler, TargetLinksHandler
@@ -69,15 +70,22 @@ class LinksScrapingEngine:
 
     def run(self):
         current_state = self.state_manager.get_current_state()
+        print(current_state)
         if current_state == EngineState.START:
             if self.link_manager.upload_link(self.search_url, Link.Type.SEARCH):
                 self.state_manager.set_current_state(EngineState.UPLOADED_SEARCH_LINK)
 
         if current_state == EngineState.UPLOADED_SEARCH_LINK:
-            links = self.search_handler.handle()
-            if links:
-                if self.__upload_links(links):
-                    self.state_manager.set_current_state(EngineState.WAITING_FOR_TARGET)
+            try:
+                links = self.search_handler.handle()
+            except ParserException:
+                print('Bad search target, check link')
+                self.state_manager.set_current_state(EngineState.UPLOADED_SEARCH_LINK)
+            else:
+                if links:
+                    if self.__upload_links(links):
+                        self.search_handler.finish()
+                        self.state_manager.set_current_state(EngineState.WAITING_FOR_TARGET)
 
         if current_state == EngineState.WAITING_FOR_TARGET:
             if self.target_handler.handle():

@@ -15,7 +15,7 @@ class ScraperApi:
     def __init__(self, api_key):
         self.api_key = api_key
 
-    def upload_target_url(self, target_url, pool='waiting'):
+    def upload_target_link(self, target_url, pool='waiting'):
         """
         API call for uploading the target URL to the server
 
@@ -25,11 +25,10 @@ class ScraperApi:
             "pool": pool,
         })
         resp = requests.post(
-            URL + 'urls/',
+            self.URL + 'urls/',
             data=payload,
             headers={'Authorization': 'Token ' + self.api_key, 'Content-type': 'application/json'}
         )
-
         return self.__handle_response(resp)
 
     def get_scrap_result(self, scrap_id):
@@ -38,11 +37,11 @@ class ScraperApi:
 
         """
         resp = requests.get(
-            URL + 'scrapes/' + str(scrap_id) + '/result',
+            self.URL + 'scrapes/' + str(scrap_id) + '/result',
             headers={'Authorization': 'Token ' + self.api_key}
         )
 
-        return self.__handle_response(resp)
+        return self.__handle_response(resp, False).content
 
     def get_url_info(self, url_id):
         """
@@ -50,7 +49,7 @@ class ScraperApi:
 
         """
         resp = requests.get(
-            URL + 'urls/' + str(url_id),
+            self.URL + 'urls/' + str(url_id),
             headers={'Authorization': 'Token ' + self.api_key}
         )
 
@@ -62,7 +61,7 @@ class ScraperApi:
 
         """
         resp = requests.get(
-            URL + 'info/',
+            self.URL + 'info/',
             headers={'Authorization': 'Token ' + self.api_key}
         )
 
@@ -74,7 +73,7 @@ class ScraperApi:
         :return: JSON object if success, or raises exception otherwise
 
         """
-        if response.status_code == 200:
+        if 200 <= response.status_code <= 204:
             if json_content:
                 return response.json()
             else:

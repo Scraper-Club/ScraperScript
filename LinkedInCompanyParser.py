@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 
 from db import Model, TextField, ModelManager
-from parsing import TargetResultParser
+from parsing import TargetResultParser, ParserException
 
 
 class CompanyModel(Model):
@@ -23,16 +23,36 @@ class LinkedInCompanyParser(TargetResultParser):
         manager = CompanyManager
 
     def get_result(self, content):
+        good_result = False
         company = CompanyModel()
-
         soup = BeautifulSoup(content, 'html.parser')
-        company.name = soup.find('h1', {'class': 'top-card__title'}).text
 
-        about_company = soup.find('div', {'class': 'about__content'}) \
-            .find('div', {'class': 'about__primary-content'})
+        try:
+            company.name = soup.find('h1', {'class': 'top-card__title'}).text
+        except:
+            print('Failed to get company name')
+        else:
+            good_result = True
 
-        company.description = about_company.find('p', {'class': 'about__description'}).text
-        company.website = about_company.find('a', {'class': 'link-without-visited-state'}).text
+        try:
+            about_company = soup.find('div', {'class': 'about__content'}) \
+                .find('div', {'class': 'about__primary-content'})
+        except:
+            raise ParserException(Exception('Bad result'))
+
+        try:
+            company.description = about_company.find('p', {'class': 'about__description'}).text
+        except:
+            pass
+        else:
+            good_result = True
+
+        try:
+            company.website = about_company.find('a', {'class': 'link-without-visited-state'}).text
+        except:
+            pass
+        else:
+            good_result = True
 
         next_location = False
         next_employees = False
@@ -51,4 +71,7 @@ class LinkedInCompanyParser(TargetResultParser):
             if 'size' in element.text.lower():
                 next_employees = True
 
-        return company
+        if good_result:
+            return company
+        else:
+            raise ParserException(Exception('Bad result'))
